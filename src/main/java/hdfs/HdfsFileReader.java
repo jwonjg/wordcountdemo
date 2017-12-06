@@ -28,8 +28,19 @@ public class HdfsFileReader {
                 // 다운로드 받을 경로
                 File destinationFile = new File(destinationPath + File.separator + filePath.getName());
 
-                // 파일 다운로드
-                IOUtils.copy(fileSystem.open(filePath), new FileOutputStream(destinationFile));
+                // 2. 입력 스트림 생성
+                // open 메서드를 호출해 스트림 객체 생성을 요청함
+                // 네임노드로부터 블록 위치를 받음
+                FSDataInputStream inputStream = fileSystem.open(filePath);
+
+                // 3. 블록 조회
+                // 블록과 가장 가까운 데이터노드를 조회해 블록을 조회하기 위한 리더기를 생성, 블록을 조회, 파일을 모두 읽지 못하면 네임노드에 다시 데이터노드 목록 요청 후 조회
+                // inputStream 의 read 메서드 호출
+                IOUtils.copy(inputStream, new FileOutputStream(destinationFile));
+
+                // 4. 입력 스트림 닫기
+                // 데이터노드와의 커넥션을 종료
+                inputStream.close();
 
                 if(destinationFile.exists()) {
                     System.out.println(path.toString() + " download success!");
@@ -62,6 +73,7 @@ public class HdfsFileReader {
             // 파일 시스템 제어 객체 생성
             Configuration conf = new Configuration();
 
+            // 1. 파일 시스템 관리 객체 생성
             FileSystem fileSystem = FileSystem.get(new URI(nameNodeUrl), conf);
 
             downloadFromHdfs(fileSystem, targetPath, destinationPath);
